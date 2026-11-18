@@ -1,5 +1,5 @@
-import { Link } from "@/lib/router";
-import { Menu, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Link, useNavigate } from "@/lib/router";
+import { ArrowLeft, Menu, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useSidebar } from "../context/SidebarContext";
 import { useCompany } from "../context/CompanyContext";
@@ -70,6 +70,7 @@ export function BreadcrumbBar({ taskDetailLayout = false, showPropertiesToggle =
     mobileToolbar,
   } = useBreadcrumbs();
   const { toggleSidebar, isMobile } = useSidebar();
+  const navigate = useNavigate();
   const { panelVisible, togglePanelVisible } = usePanel();
   const { selectedCompanyId, selectedCompany } = useCompany();
   const taskPanelOpen = breadcrumbPanelControl?.open ?? panelVisible;
@@ -132,11 +133,31 @@ export function BreadcrumbBar({ taskDetailLayout = false, showPropertiesToggle =
 
   const currentCrumb = breadcrumbs[breadcrumbs.length - 1];
   const isTaskTrail = Boolean(currentCrumb.identifier);
+  const backFallbackHref = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2]?.href ?? breadcrumbs[0]?.href ?? "/issues" : breadcrumbs[0]?.href ?? "/issues";
+  const backButton = isMobile && isTaskTrail && (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="mr-1 shrink-0"
+      onClick={() => {
+        if (window.history.length > 1) {
+          navigate(-1);
+        } else {
+          navigate(backFallbackHref);
+        }
+      }}
+      aria-label="Back"
+      title="Back"
+    >
+      <ArrowLeft className="h-4 w-4" />
+    </Button>
+  );
   const visibleBreadcrumbs = isMobile && isTaskTrail && breadcrumbs.length > 1 ? breadcrumbs.slice(1) : breadcrumbs;
   if (isMobile && isTaskTrail && visibleBreadcrumbs.length === 1) {
     return (
       <div className="h-(--sz-60px) shrink-0 flex items-center border-b border-border px-4">
         {menuButton}
+        {backButton}
         <h1 className="flex min-w-0 flex-1 items-baseline gap-1.5 text-sm">
           {currentCrumb.leading ? (
             <span className="flex shrink-0 items-center self-center">{currentCrumb.leading}</span>
@@ -259,6 +280,7 @@ export function BreadcrumbBar({ taskDetailLayout = false, showPropertiesToggle =
       )}
     >
       {menuButton}
+      {backButton}
       {breadcrumbTrail}
       {globalToolbarSlots}
       {isMobile && isTaskTrail ? null : propertiesToggle}
