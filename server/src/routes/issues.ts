@@ -66,7 +66,7 @@ import { assertOnboardingFirstTaskDependenciesAllowed } from "../services/onboar
 import { resolveChatTaskAssignment } from "../services/chat-task-assignment.js";
 import { issueRecoveryActionReadModel } from "../services/issue-recovery-actions.js";
 import { inspectWorkspaceSource } from "../services/workspace-source-inspection.js";
-import { getExecutionBlocker } from "../services/execution-blocker.js";
+import { authorizeBlockedLegacyReplayForUser, getExecutionBlocker } from "../services/execution-blocker.js";
 import { EXECUTION_RECONCILIATION_CAUSES, requiresExecutionReconciliation } from "@paperclipai/shared";
 import {
   validateExecutionReconciliation,
@@ -20829,6 +20829,9 @@ export function issueRoutes(
           currentStatus: wakeIssueSnapshot.status,
         });
         if (assigneeId && !goalCommentSteered && shouldWakeAssigneeForComment) {
+          if (req.actor.type === "board") {
+            await authorizeBlockedLegacyReplayForUser(db, currentIssue.companyId, currentIssue.id, actor.actorId);
+          }
           if (reopened) {
             addWakeup(assigneeId, {
               source: "automation",

@@ -490,3 +490,47 @@ export async function getExecutionBlocker(db: Db, companyId: string, issueId: st
     ...(reconstructionPending ? { workspaceReconstructionPending: true } : {}),
   };
 }
+
+/**
+ * Clears `automaticRecovery.replay = "blocked"` on resolved legacy reconciliation
+ * records when a board user explicitly posts a follow-up comment or retry,
+ * provided no workspace repair is required.
+ */
+export async function authorizeBlockedLegacyReplayForUser(
+  db: Db,
+  companyId: string,
+  issueId: string,
+  actorId: string | null,
+) {
+  const blocked = await db
+    .select()
+    .from(issueRecoveryActions)
+    .where(
+      and(
+        eq(issueRecoveryActions.companyId, companyId),
+        eq(issueRecoveryActions.sourceIssueId, issueId),
+        eq(issueRecoveryActions.status, "resolved"),
+        eq(issueRecoveryActions.cause, "legacy_execution_requires_reconciliation"),
+        sql`${issueRecoveryActions.evidence}->'automaticRecovery'->>'replay' = 'blocked'`,
+      ),
+    );
+  for (const action of blocked) {
+    if (hasRequiredWorkspaceRecovery(action.evidence)) continue;
+    const automaticRecovery =
+      (action.evidence as { automaticRecovery?: Record<string, unknown> } | null)
+        ?.automaticRecovery ?? {};
+    const nextEvidence = {
+      ...(action.evidence as Record<string, unknown>),
+      automaticRecovery: {
+        ...automaticRecovery,
+        replay: "user_authorized",
+        authorizedByUserId: actorId,
+        authorizedAt: new Date().toISOString(),
+      },
+    };
+    await db
+      .update(issueRecoveryActions)
+      .set({ evidence: nextEvidence, outcome: "restored", updatedAt: new Date() })
+      .where(eq(issueRecoveryActions.id, action.id));
+  }
+}
