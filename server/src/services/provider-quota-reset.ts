@@ -36,7 +36,7 @@ export function parseProviderQuotaClockReset(error: string, now: Date) {
 
   let hour = meridiem ? hourValue % 12 : hourValue;
   if (meridiem === "p") hour += 12;
-  const timeZone = (match[7] ?? match[8])?.trim() || "UTC";
+  const timeZone = (match[7] ?? match[8])?.trim() || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
   try {
     const wallClock = (date: Date) =>

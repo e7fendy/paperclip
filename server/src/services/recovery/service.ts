@@ -4635,6 +4635,7 @@ export function recoveryService(
     >;
   }) {
     if (
+      input.issue.status !== "todo" &&
       input.issue.status !== "in_progress" &&
       input.issue.status !== "in_review"
     )
@@ -4671,11 +4672,12 @@ export function recoveryService(
         recoveryPolicy: "wake_owner" as const,
       },
     };
+    const targetStatus = input.issue.status === "todo" ? "in_progress" : input.issue.status;
     const transition = applyIssueMonitorPolicyTransition({
       issue: input.issue,
       policy,
       previousPolicy,
-      requestedStatus: input.issue.status,
+      requestedStatus: targetStatus,
       requestedAssigneePatch: {},
       actor: { agentId: null, userId: null },
       monitorExplicitlyUpdated: true,

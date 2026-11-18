@@ -56,7 +56,10 @@ function awaitsExactRemoteResume(issue: Pick<typeof issues.$inferSelect, "status
     && (run.processPid !== null || run.processGroupId !== null) && detail?.recoveryMode === "exact_checkpoint_resume";
 }
 
-type ProjectionIssue = Pick<typeof issues.$inferSelect, "id" | "companyId" | "status" | "assigneeAgentId" | "projectId">;
+type ProjectionIssue = Pick<typeof issues.$inferSelect, "id" | "companyId" | "status" | "assigneeAgentId" | "projectId"> & {
+  monitorNextCheckAt?: Date | null;
+  monitorScheduledBy?: string | null;
+};
 type ProjectionRun = Pick<typeof heartbeatRuns.$inferSelect,
   "id" | "status" | "scheduledRetryAt" | "errorCode" | "livenessState" | "resultJson"> &
   Partial<Pick<typeof heartbeatRuns.$inferSelect, "agentId" | "error" | "companyId" | "nativeIssueId" | "runtimeMode" | "startedAt"
@@ -363,7 +366,11 @@ function projectTaskInterruptionState(issue: ProjectionIssue, input: ProjectionS
   // would race it, so show the resume until it is due and briefly while its
   // dispatch runs. A resume that never ran falls through to one Retry.
   const nativeResumeAt = run.nativeResumeAt?.getTime();
-  const retryAt = system?.nextAttemptAt ?? nativeResumeAt ?? run.scheduledRetryAt?.getTime();
+  const monitorRetryAt =
+    (run.errorCode === "provider_quota" || issue.monitorScheduledBy === "assignee")
+      ? issue.monitorNextCheckAt?.getTime()
+      : undefined;
+  const retryAt = system?.nextAttemptAt ?? nativeResumeAt ?? run.scheduledRetryAt?.getTime() ?? monitorRetryAt;
   if (run.runtimeMode === "native" && run.errorCode === "native_governed_wait_settlement_pending") {
     const settling = recoveryRunning || Boolean(retryAt && now - retryAt < NATIVE_RESUME_DISPATCH_GRACE_MS);
     return { ...base, state: settling ? "working" : "failed", canRetry: false,
