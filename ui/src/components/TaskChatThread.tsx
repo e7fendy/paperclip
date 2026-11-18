@@ -3506,7 +3506,8 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                         tail={
                           tailRunId ||
                           optimisticRunnerStartup ||
-                          bottomBlockerLinks ? (
+                          bottomBlockerLinks ||
+                          (composerTakeover && !composerPause) ? (
                             <>
                               {tailRunId || optimisticRunnerStartup ? (
                                 <div data-testid="task-chat-live-transcript">
