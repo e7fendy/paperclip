@@ -33,7 +33,6 @@ import { ToastViewport } from "./ToastViewport";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { WorktreeBanner } from "./WorktreeBanner";
 import { DevRestartBanner } from "./DevRestartBanner";
-import { StandaloneBrowserControls } from "./StandaloneBrowserControls";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { SidebarShell } from "./SidebarShell.production";
 import { SecondarySidebar } from "./SecondarySidebar.production";
@@ -540,7 +539,6 @@ export function Layout() {
                   "sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85",
               )}
             >
-              <StandaloneBrowserControls mobile={isMobile} />
               <BreadcrumbBar />
               {isMobile && isCompanySettingsRoute ? (
                 <div className="border-b border-border px-4 pb-3">

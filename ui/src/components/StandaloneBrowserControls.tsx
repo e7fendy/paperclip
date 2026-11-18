@@ -1,38 +1,15 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { ExternalLink, RefreshCw, Share2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ExternalLink, MoreHorizontal, RefreshCw, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useOptionalToastActions } from "../context/ToastContext";
 import { CHROMELESS_DISPLAY_MODES, isChromelessDisplayMode } from "../lib/pwa-display-mode";
 import { copyTextToClipboard } from "../lib/clipboard";
-
-function ControlButton({
-  label,
-  children,
-  onClick,
-}: {
-  label: string;
-  children: ReactNode;
-  onClick: () => void | Promise<void>;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="size-8 text-muted-foreground hover:text-foreground"
-          aria-label={label}
-          onClick={() => void onClick()}
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
 
 export function StandaloneBrowserControls({ mobile }: { mobile: boolean }) {
   const [chromeless, setChromeless] = useState(() =>
@@ -87,16 +64,33 @@ export function StandaloneBrowserControls({ mobile }: { mobile: boolean }) {
   if (!mobile || !chromeless) return null;
 
   return (
-    <div className="flex h-10 items-center justify-end gap-1 border-b border-border bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-      <ControlButton label="Refresh" onClick={refresh}>
-        <RefreshCw className="h-4 w-4" />
-      </ControlButton>
-      <ControlButton label="Share" onClick={share}>
-        <Share2 className="h-4 w-4" />
-      </ControlButton>
-      <ControlButton label="Open in Browser" onClick={openInBrowser}>
-        <ExternalLink className="h-4 w-4" />
-      </ControlButton>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+          aria-label="Browser actions"
+          title="Browser actions"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={refresh}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          <span>Refresh</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void share()}>
+          <Share2 className="mr-2 h-4 w-4" />
+          <span>Share</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={openInBrowser}>
+          <ExternalLink className="mr-2 h-4 w-4" />
+          <span>Open in Browser</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -18,6 +18,7 @@ import { PluginSlotOutlet, usePluginSlots } from "@/plugins/slots";
 import { PluginLauncherOutlet, usePluginLaunchers } from "@/plugins/launchers";
 import { cn } from "../lib/utils";
 import { useCoordinatorPresentation } from "./coordinator/CoordinatorPresentation";
+import { StandaloneBrowserControls } from "./StandaloneBrowserControls";
 
 type GlobalToolbarContext = { companyId: string | null; companyPrefix: string | null };
 
@@ -42,9 +43,11 @@ function CrumbIdentifier({ identifier }: { identifier?: string }) {
 function GlobalToolbar({
   context,
   pageToolbar,
+  mobile = false,
 }: {
   context: GlobalToolbarContext;
   pageToolbar?: ReactNode;
+  mobile?: boolean;
 }) {
   const { slots } = usePluginSlots({ slotTypes: ["globalToolbarButton"], companyId: context.companyId });
   const { launchers } = usePluginLaunchers({ placementZones: ["globalToolbarButton"], companyId: context.companyId, enabled: !!context.companyId });
@@ -57,6 +60,7 @@ function GlobalToolbar({
       {launchers.length > 0 ? (
         <PluginLauncherOutlet placementZones={["globalToolbarButton"]} context={context} className="flex items-center gap-1" />
       ) : null}
+      <StandaloneBrowserControls mobile={mobile} />
     </div>
   );
 }
@@ -100,6 +104,7 @@ export function BreadcrumbBar({ taskDetailLayout = false, showPropertiesToggle =
     <GlobalToolbar
       context={globalToolbarSlotContext}
       pageToolbar={isMobile ? null : breadcrumbToolbar}
+      mobile={isMobile}
     />
   );
 
