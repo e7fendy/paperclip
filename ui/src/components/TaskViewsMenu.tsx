@@ -35,7 +35,7 @@ export function TaskViewsMenu({
         <Button
           size="sm"
           variant="outline"
-          className="h-8 gap-1.5"
+          className="h-8 shrink-0 gap-1.5"
           aria-label={`Change view — currently ${active.label}`}
         >
           <span className="max-w-(--sz-160px) truncate font-medium">{active.label}</span>
