@@ -262,6 +262,7 @@ import {
   hasVisibleMonitorSurface,
 } from "../components/IssueMonitorBanner";
 import { IssueScheduledRetryCard } from "../components/IssueScheduledRetryCard";
+import { TaskHierarchyComposerStrip } from "../components/task-chat/TaskHierarchyComposerStrip";
 import { ExternallyConnectedTaskBanner } from "../components/chat/ExternallyConnectedTaskBanner";
 import {
   IssueProperties,
@@ -8773,16 +8774,26 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                   onRefreshLatestComments={refetchLatestComments}
                   composerRef={commentComposerRef}
                   composerAccessory={
-                    hasVisibleMonitorSurface(issue) ? (
-                      <IssueMonitorComposerStrip
-                        issue={issue}
-                        hasActiveRun={hasLiveRuns}
-                        workProducts={workProducts}
-                        checkError={checkIssueMonitorNow.error ? describeError(checkIssueMonitorNow.error, { action: "check the monitor" }).body : null}
-                        onCheckNow={() => checkIssueMonitorNow.mutate()}
-                        checkingNow={checkIssueMonitorNow.isPending}
-                      />
-                    ) : null
+                    <>
+                      {!conversationAgent && (breadcrumbParent || childIssues.length > 0) ? (
+                        <TaskHierarchyComposerStrip
+                          key={issue.id}
+                          parentIssue={breadcrumbParent && !isLockedIssueStub(breadcrumbParent) ? breadcrumbParent : null}
+                          childIssues={childIssues}
+                          linkState={resolvedIssueDetailState ?? location.state}
+                        />
+                      ) : null}
+                      {hasVisibleMonitorSurface(issue) ? (
+                        <IssueMonitorComposerStrip
+                          issue={issue}
+                          hasActiveRun={hasLiveRuns}
+                          workProducts={workProducts}
+                          checkError={checkIssueMonitorNow.error ? describeError(checkIssueMonitorNow.error, { action: "check the monitor" }).body : null}
+                          onCheckNow={() => checkIssueMonitorNow.mutate()}
+                          checkingNow={checkIssueMonitorNow.isPending}
+                        />
+                      ) : null}
+                    </>
                   }
                   footer={
                     !taskChatShellEnabled && siblingNavigation ? (
