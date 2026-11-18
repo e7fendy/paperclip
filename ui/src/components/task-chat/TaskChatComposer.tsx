@@ -388,6 +388,119 @@ function escapeMarkdownLabel(name: string): string {
   return name.replace(/[[\]]/g, "\\$&");
 }
 
+/** Inline card for pending question / approval / confirmation takeovers. */
+export function TaskChatTakeoverCard({
+  takeover,
+  mobile = false,
+}: {
+  takeover: TaskChatComposerTakeover;
+  mobile?: boolean;
+}) {
+  const [takeoverBusy, setTakeoverBusy] = useState(false);
+  const [takeoverError, setTakeoverError] = useState<string | null>(null);
+  const [takeoverHeaderClaimed, setTakeoverHeaderClaimed] = useState(false);
+  const [takeoverHeaderSlot, setTakeoverHeaderSlot] =
+    useState<HTMLElement | null>(null);
+  const [takeoverControlsSlot, setTakeoverControlsSlot] =
+    useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setTakeoverBusy(false);
+    setTakeoverError(null);
+    setTakeoverHeaderClaimed(false);
+  }, [takeover.id]);
+
+  function skipTakeover() {
+    setTakeoverBusy(true);
+    setTakeoverError(null);
+    Promise.resolve(takeover.onSkip()).catch((err) => {
+      setTakeoverBusy(false);
+      setTakeoverError(
+        err instanceof Error ? err.message : "This request could not be skipped.",
+      );
+    });
+  }
+
+  const takeoverSkipButton = (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      disabled={takeoverBusy}
+      onClick={skipTakeover}
+    >
+      {takeoverBusy ? (
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+      ) : null}
+      Skip
+    </Button>
+  );
+
+  return (
+    <section
+      className={cn(
+        "relative rounded-xl border border-border bg-card p-(--sz-18px) shadow-sm",
+        mobile ? "overflow-visible" : "max-h-(--tc-interaction-card-max-h) overflow-y-auto scrollbar-auto-hide",
+      )}
+      aria-label={takeover.label}
+      data-testid="task-chat-composer-takeover"
+    >
+      <div
+        className={cn(
+          "flex min-w-0 items-center gap-2",
+          takeover.hideLabel && takeover.pendingCount === 1
+            ? "absolute right-0 top-0 z-10"
+            : "mb-3",
+        )}
+        data-testid="task-chat-composer-takeover-header"
+      >
+        <div className="min-w-0 flex-1">
+          {!takeoverHeaderClaimed && !takeover.hideLabel ? (
+            <strong className="block truncate text-sm font-medium text-foreground">
+              {takeover.label}
+            </strong>
+          ) : null}
+          <div
+            ref={setTakeoverHeaderSlot}
+            className="flex min-w-0 items-center"
+            data-testid="task-chat-composer-takeover-title-slot"
+          />
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          {takeover.pendingCount > 1 ? (
+            <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={takeover.onShowNext}>
+              {takeover.pendingCount} pending
+            </Button>
+          ) : null}
+          <div ref={setTakeoverControlsSlot} className="flex shrink-0 items-center" data-testid="task-chat-composer-takeover-controls-slot" />
+          <Button type="button" size="icon-xs" variant="ghost" className="text-muted-foreground hover:text-foreground"
+            aria-label={`Dismiss ${takeover.label}`} disabled={takeoverBusy} onClick={takeover.onDismiss}>
+            <X aria-hidden />
+          </Button>
+        </div>
+      </div>
+      <div className={takeover.hideLabel && takeover.pendingCount === 1 ? "pr-8" : "pr-1"}
+        data-testid="task-chat-composer-takeover-body">
+        <TaskChatComposerTakeoverActionsContext.Provider
+          value={{
+            skipButton: takeover.inlineSkip && !takeover.hideSkip ? takeoverSkipButton : null,
+            dismiss: takeover.onDismiss,
+            headerSlot: takeoverHeaderSlot,
+            controlsSlot: takeoverControlsSlot,
+            setHeaderClaimed: setTakeoverHeaderClaimed,
+          }}
+        >
+          {takeover.content}
+        </TaskChatComposerTakeoverActionsContext.Provider>
+      </div>
+      {takeoverError ? <p className="mt-2 text-sm text-destructive" role="alert">{takeoverError}</p> : null}
+      {!takeover.inlineSkip && !takeover.hideSkip ? (
+        <div className="mt-3 flex items-center justify-end gap-2">{takeoverSkipButton}</div>
+      ) : null}
+    </section>
+  );
+}
+
 export function TaskChatComposer({
   onAdd,
   creation,
@@ -1286,67 +1399,7 @@ export function TaskChatComposer({
         }}
       />
       {takeoverVisible && takeover ? (
-        <section
-          className={cn(
-            "relative rounded-xl border border-border bg-card p-(--sz-18px) shadow-sm",
-            mobile ? "overflow-visible" : "max-h-(--tc-interaction-card-max-h) overflow-y-auto scrollbar-auto-hide",
-          )}
-          aria-label={takeover.label}
-          data-testid="task-chat-composer-takeover"
-        >
-          <div
-            className={cn(
-              "flex min-w-0 items-center gap-2",
-              takeover.hideLabel && takeover.pendingCount === 1
-                ? "absolute right-0 top-0 z-10"
-                : "mb-3",
-            )}
-            data-testid="task-chat-composer-takeover-header"
-          >
-            <div className="min-w-0 flex-1">
-              {!takeoverHeaderClaimed && !takeover.hideLabel ? (
-                <strong className="block truncate text-sm font-medium text-foreground">
-                  {takeover.label}
-                </strong>
-              ) : null}
-              <div
-                ref={setTakeoverHeaderSlot}
-                className="flex min-w-0 items-center"
-                data-testid="task-chat-composer-takeover-title-slot"
-              />
-            </div>
-            <div className="ml-auto flex shrink-0 items-center gap-1">
-              {takeover.pendingCount > 1 ? (
-                <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={takeover.onShowNext}>
-                  {takeover.pendingCount} pending
-                </Button>
-              ) : null}
-              <div ref={setTakeoverControlsSlot} className="flex shrink-0 items-center" data-testid="task-chat-composer-takeover-controls-slot" />
-              <Button type="button" size="icon-xs" variant="ghost" className="text-muted-foreground hover:text-foreground"
-                aria-label={`Dismiss ${takeover.label}`} disabled={takeoverBusy} onClick={takeover.onDismiss}>
-                <X aria-hidden />
-              </Button>
-            </div>
-          </div>
-          <div className={takeover.hideLabel && takeover.pendingCount === 1 ? "pr-8" : "pr-1"}
-            data-testid="task-chat-composer-takeover-body">
-            <TaskChatComposerTakeoverActionsContext.Provider
-              value={{
-                skipButton: takeover.inlineSkip && !takeover.hideSkip && takeoverSkipButton ? takeoverSkipButton : null,
-                dismiss: takeover.onDismiss,
-                headerSlot: takeoverHeaderSlot,
-                controlsSlot: takeoverControlsSlot,
-                setHeaderClaimed: setTakeoverHeaderClaimed,
-              }}
-            >
-              {takeover.content}
-            </TaskChatComposerTakeoverActionsContext.Provider>
-          </div>
-          {takeoverError ? <p className="mt-2 text-sm text-destructive" role="alert">{takeoverError}</p> : null}
-          {!takeover.inlineSkip && !takeover.hideSkip ? (
-            <div className="mt-3 flex items-center justify-end gap-2">{takeoverSkipButton}</div>
-          ) : null}
-        </section>
+        <TaskChatTakeoverCard takeover={takeover} mobile={mobile} />
       ) : null}
       {creation?.contextBar ? (
         <TaskChatComposerBar

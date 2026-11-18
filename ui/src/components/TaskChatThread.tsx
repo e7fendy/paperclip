@@ -121,7 +121,7 @@ import {
   TaskChatThreadView,
   taskChatContentKey,
 } from "@/components/task-chat/TaskChatThreadView";
-import { TaskChatComposer } from "@/components/task-chat/TaskChatComposer";
+import { TaskChatComposer, TaskChatTakeoverCard } from "@/components/task-chat/TaskChatComposer";
 import { TaskChatComposerDock } from "@/components/task-chat/TaskChatComposerDock";
 import {
   RunnerGoalWidget,
@@ -3598,6 +3598,11 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                                 </div>
                               ))}
                               {bottomBlockerLinks}
+                              {composerTakeover && !composerPause ? (
+                                <div className="pt-2">
+                                  <TaskChatTakeoverCard takeover={composerTakeover} mobile={isMobile} />
+                                </div>
+                              ) : null}
                             </>
                           ) : null
                         }
@@ -3718,7 +3723,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                           onSaveQueuedEdit={saveQueuedEdit}
                           onCancelQueuedEdit={() => setQueuedEdit(null)}
                           pause={composerPause}
-                          takeover={composerTakeover}
+                          takeover={null}
                           runnerGoalCapability={runnerGoal.data?.capability ?? null}
                           onRunnerGoalCommand={runnerGoal.executeComposerCommand}
                           onRunnerGoalReassign={reassignForRunnerGoal}
