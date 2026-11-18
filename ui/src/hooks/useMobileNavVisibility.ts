@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 import { MobileNavScrollTracker } from "../lib/mobile-nav-scroll";
 
+const TASK_DETAIL_ROUTE_RE = /(?:^|\/)issues\/[^/]+(?:\/|$)/;
+
 export function useMobileNavVisibility(enabled: boolean, pathname: string): boolean {
-  const [visible, setVisible] = useState(true);
+  const isTaskDetail = TASK_DETAIL_ROUTE_RE.test(pathname);
+  const [visible, setVisible] = useState(!isTaskDetail);
 
   useEffect(() => {
+    if (isTaskDetail) {
+      setVisible(false);
+      return;
+    }
     setVisible(true);
     if (!enabled) return;
 
@@ -40,7 +47,7 @@ export function useMobileNavVisibility(enabled: boolean, pathname: string): bool
       window.removeEventListener("scroll", onScroll);
       if (frame !== null) cancelAnimationFrame(frame);
     };
-  }, [enabled, pathname]);
+  }, [enabled, pathname, isTaskDetail]);
 
-  return visible;
+  return isTaskDetail ? false : visible;
 }
