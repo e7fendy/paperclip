@@ -1896,9 +1896,11 @@ function StreamlinedIssuesList({
               type="button"
               variant="outline"
               size="icon"
-              className={cn("hidden h-8 w-8 shrink-0 sm:inline-flex", viewState.nestingEnabled && "bg-accent")}
+              className={cn("h-8 w-8 shrink-0", viewState.nestingEnabled && "bg-accent")}
               onClick={() => updateView({ nestingEnabled: !viewState.nestingEnabled })}
               title={viewState.nestingEnabled ? "Disable parent-child nesting" : "Enable parent-child nesting"}
+              aria-label={viewState.nestingEnabled ? "Disable parent-child nesting" : "Enable parent-child nesting"}
+              aria-pressed={viewState.nestingEnabled}
             >
               <ListTree className="h-3.5 w-3.5" />
             </Button>
