@@ -384,6 +384,29 @@ function admitTaskRetry(input: TaskRetryRequest) {
       inArray(sql`${issueRecoveryActions.evidence}->>'runId'`, retrySources ?? [latest.id]))).for("update");
     for (let index = 0; !busy && index < records.length; index++) {
       const action = records[index];
+      const automaticRecovery = (action.evidence as { automaticRecovery?: Record<string, unknown> } | null)?.automaticRecovery;
+      if (
+        !input.initiatedBy &&
+        action.status === "resolved" &&
+        action.cause === "legacy_execution_requires_reconciliation" &&
+        automaticRecovery?.replay === "blocked" &&
+        !hasRequiredWorkspaceRecovery(action.evidence)
+      ) {
+        const nextEvidence = {
+          ...(action.evidence as Record<string, unknown>),
+          automaticRecovery: {
+            ...automaticRecovery,
+            replay: "user_authorized",
+            authorizedByUserId: input.actorId,
+            authorizedAt: new Date().toISOString(),
+          },
+        };
+        await tx.update(issueRecoveryActions)
+          .set({ evidence: nextEvidence, outcome: "restored", updatedAt: new Date() })
+          .where(eq(issueRecoveryActions.id, action.id));
+        [records[index]] = await tx.select().from(issueRecoveryActions).where(eq(issueRecoveryActions.id, action.id));
+        continue;
+      }
       if (!hasRequiredWorkspaceRecovery(action.evidence) || readSystemRecovery(action.evidence)) continue;
       await adoptSystemRecovery(db, { companyId: issue.companyId, issueId: issue.id,
         runId: String(action.evidence.runId), actionId: action.id });
